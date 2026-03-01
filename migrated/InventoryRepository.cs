@@ -45,7 +45,7 @@ namespace CodeMigra.Inventory
                     ItemId       INTEGER PRIMARY KEY AUTOINCREMENT,
                     SKU          TEXT NOT NULL UNIQUE,
                     Description  TEXT,
-                    Price        REAL NOT NULL DEFAULT 0,
+                    Price        TEXT NOT NULL DEFAULT '0.000000',
                     QuantityOnHand INTEGER NOT NULL DEFAULT 0,
                     ReorderLevel   INTEGER NOT NULL DEFAULT 0
                 )";
@@ -111,7 +111,8 @@ namespace CodeMigra.Inventory
         {
             cmd.Parameters.AddWithValue("@sku",    item.SKU);
             cmd.Parameters.AddWithValue("@desc",   item.Description);
-            cmd.Parameters.AddWithValue("@price",  (double)item.Price);
+            // Store price as TEXT to avoid double precision loss (SQLite REAL is IEEE 754 64-bit)
+            cmd.Parameters.AddWithValue("@price",  item.Price.ToString("F6", System.Globalization.CultureInfo.InvariantCulture));
             cmd.Parameters.AddWithValue("@qty",    item.QuantityOnHand);
             cmd.Parameters.AddWithValue("@reorder",item.ReorderLevel);
         }
@@ -121,7 +122,7 @@ namespace CodeMigra.Inventory
             ItemId         = r.GetInt64(r.GetOrdinal("ItemId")),
             SKU            = r.GetString(r.GetOrdinal("SKU")),
             Description    = r.IsDBNull(r.GetOrdinal("Description")) ? "" : r.GetString(r.GetOrdinal("Description")),
-            Price          = (decimal)r.GetDouble(r.GetOrdinal("Price")),
+            Price          = decimal.Parse(r.GetString(r.GetOrdinal("Price")), System.Globalization.CultureInfo.InvariantCulture),
             QuantityOnHand = r.GetInt32(r.GetOrdinal("QuantityOnHand")),
             ReorderLevel   = r.GetInt32(r.GetOrdinal("ReorderLevel"))
         };
